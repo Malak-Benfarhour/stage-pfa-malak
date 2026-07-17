@@ -8,11 +8,6 @@ from PIL import Image
 import openpyxl
 from openpyxl.drawing.image import Image as XLImage
 import io as io_lib
-import tempfile
-import subprocess
-import webbrowser
-import platform
-import time
 
 # ==============================================================================
 # 1. PAGE CONFIGURATION
@@ -29,7 +24,6 @@ if "page" not in st.session_state:
     st.session_state.page = "menu"
     st.session_state.logged_in = False
     st.session_state.login_success = False
-    st.session_state.file_modified = False
 
 # Function to encode local image to Base64
 def get_base64_image(image_path):
@@ -43,7 +37,7 @@ def get_base64_from_bytes(image_bytes):
     return base64.b64encode(image_bytes).decode()
 
 # ==============================================================================
-# DATA INTEGRATION - LECTURE DIRECTE DEPUIS LE FICHIER EXCEL + IMAGES
+# DATA INTEGRATION
 # ==============================================================================
 def load_project_data():
     """Load project data and images directly from the Excel file"""
@@ -93,46 +87,11 @@ def load_project_data():
     except Exception as e:
         return pd.DataFrame(), {}
 
-# ==============================================================================
-# FONCTION POUR OUVRIR LE FICHIER EXCEL DIRECTEMENT
-# ==============================================================================
-def open_excel_file():
-    """Ouvrir le fichier Excel directement avec l'application par défaut"""
-    excel_path = os.path.abspath("Projects -PN (1).xlsx")
-    
-    if not os.path.exists(excel_path):
-        return False, "File not found"
-    
-    try:
-        system = platform.system()
-        
-        if system == "Windows":
-            os.startfile(excel_path)
-        elif system == "Darwin":  # macOS
-            subprocess.run(["open", excel_path])
-        else:  # Linux
-            subprocess.run(["xdg-open", excel_path])
-        
-        return True, "File opened successfully"
-    except Exception as e:
-        return False, str(e)
-
-# ==============================================================================
-# FONCTION POUR VERIFIER SI LE FICHIER A ETE MODIFIE
-# ==============================================================================
 def get_file_modification_time():
-    """Retourne la date de modification du fichier Excel"""
     excel_path = "Projects -PN (1).xlsx"
     if os.path.exists(excel_path):
         return os.path.getmtime(excel_path)
     return None
-
-def check_file_modified(initial_time):
-    """Vérifie si le fichier a été modifié depuis initial_time"""
-    current_time = get_file_modification_time()
-    if current_time and initial_time:
-        return current_time > initial_time
-    return False
 
 # Load data
 if 'project_data' not in st.session_state:
@@ -151,7 +110,6 @@ if 'project_data' not in st.session_state:
         st.session_state.project_data = df
         st.session_state.images_data = {}
 
-# Initialiser le timestamp du fichier
 if 'file_timestamp' not in st.session_state:
     st.session_state.file_timestamp = get_file_modification_time()
 
@@ -164,7 +122,7 @@ else:
     bg_style = "background: linear-gradient(135deg, #1a0000 0%, #2d0a0a 50%, #1a0000 100%);" 
 
 # ==============================================================================
-# 2. GLOBAL CSS DESIGN - RED THEME
+# CSS
 # ==============================================================================
 st.markdown(f"""
     <style>
@@ -296,55 +254,6 @@ st.markdown(f"""
             margin: 4px 0 0 0; 
         }}
 
-        .info-header {{
-            display: none !important;
-        }}
-
-        .doc-btn-group {{
-            margin: 15px 0 5px 0;
-            padding: 20px 15px 15px 15px;
-            background: linear-gradient(135deg, #ffffff, #f8f5f5);
-            border-radius: 16px;
-            border: 2px solid #e3051c;
-            box-shadow: 0 4px 25px rgba(227, 5, 28, 0.12);
-        }}
-        
-        .doc-btn-title {{
-            text-align: center;
-            color: #1a0000;
-            font-size: 20px;
-            font-weight: 700;
-            margin: 0 0 5px 0;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }}
-        
-        .doc-btn-title span {{
-            color: #e3051c;
-        }}
-        
-        .doc-btn-subtitle {{
-            text-align: center;
-            color: #6b4a4a;
-            font-size: 13px;
-            margin: 0 0 15px 0;
-            letter-spacing: 0.5px;
-        }}
-        
-        .doc-category-label {{
-            font-size: 11px !important;
-            font-weight: 600 !important;
-            color: #888888 !important;
-            padding: 4px 12px !important;
-            background: #f5f5f5 !important;
-            border-radius: 12px !important;
-            display: inline-block !important;
-            margin: 8px 0 6px 0 !important;
-            border-left: 3px solid #e3051c !important;
-            letter-spacing: 1.5px !important;
-            text-transform: uppercase !important;
-        }}
-        
         .stButton > button {{
             border-radius: 12px !important;
             font-weight: 700 !important;
@@ -361,70 +270,6 @@ st.markdown(f"""
         .stButton > button:hover {{
             transform: translateY(-3px) scale(1.02) !important;
             box-shadow: 0 8px 30px rgba(0,0,0,0.20) !important;
-        }}
-        
-        .stButton > button.doc-2d {{
-            background: linear-gradient(135deg, #0d47a1, #1565c0) !important;
-            color: white !important;
-            border-color: #0d47a1 !important;
-            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.4) !important;
-        }}
-        .stButton > button.doc-2d:hover {{
-            background: linear-gradient(135deg, #1565c0, #0d47a1) !important;
-            box-shadow: 0 8px 30px rgba(13, 71, 161, 0.6) !important;
-        }}
-        
-        .stButton > button.doc-3d {{
-            background: linear-gradient(135deg, #1b5e20, #2e7d32) !important;
-            color: white !important;
-            border-color: #1b5e20 !important;
-            box-shadow: 0 4px 15px rgba(27, 94, 32, 0.4) !important;
-        }}
-        .stButton > button.doc-3d:hover {{
-            background: linear-gradient(135deg, #2e7d32, #1b5e20) !important;
-            box-shadow: 0 8px 30px rgba(27, 94, 32, 0.6) !important;
-        }}
-        
-        .stButton > button.doc-mold {{
-            background: linear-gradient(135deg, #e65100, #f57c00) !important;
-            color: white !important;
-            border-color: #e65100 !important;
-            box-shadow: 0 4px 15px rgba(230, 81, 0, 0.4) !important;
-        }}
-        .stButton > button.doc-mold:hover {{
-            background: linear-gradient(135deg, #f57c00, #e65100) !important;
-            box-shadow: 0 8px 30px rgba(230, 81, 0, 0.6) !important;
-        }}
-        
-        .stButton > button.doc-standard {{
-            background: linear-gradient(135deg, #4a148c, #6a1b9a) !important;
-            color: white !important;
-            border-color: #4a148c !important;
-            box-shadow: 0 4px 15px rgba(74, 20, 140, 0.4) !important;
-        }}
-        .stButton > button.doc-standard:hover {{
-            background: linear-gradient(135deg, #6a1b9a, #4a148c) !important;
-            box-shadow: 0 8px 30px rgba(74, 20, 140, 0.6) !important;
-        }}
-
-        .stButton button {{
-            border-radius: 10px !important;
-            font-weight: 600 !important;
-            letter-spacing: 0.5px;
-            transition: all 0.3s ease !important;
-            font-size: 13px !important;
-            padding: 6px 14px !important;
-            background: transparent !important;
-            border: 1px solid rgba(227, 5, 28, 0.3) !important;
-            color: #e3051c !important;
-            width: 100% !important;
-            margin-top: 10px !important;
-        }}
-
-        .stButton button:hover {{
-            background: #e3051c !important;
-            color: #ffffff !important;
-            border: 1px solid #e3051c !important;
         }}
 
         .stButton button[kind="primary"] {{
@@ -534,25 +379,6 @@ st.markdown(f"""
             color: #4a2a2a;
         }}
 
-        .result-card {{
-            background: #faf8f8; 
-            border-left: 4px solid #e3051c; 
-            padding: 8px 15px; 
-            border-radius: 8px; 
-            margin-bottom: 5px;
-            height: 100%;
-        }}
-        .result-card p {{
-            margin: 2px 0;
-            font-size: 14px;
-        }}
-        .result-card b {{
-            color: #1a0000;
-        }}
-        .result-card span {{
-            color: #4a2a2a;
-        }}
-
         .stat-card {{
             background: linear-gradient(135deg, #ffffff, #faf8f8); 
             border: 1px solid rgba(227,5,28,0.15); 
@@ -574,27 +400,6 @@ st.markdown(f"""
             letter-spacing: 1.5px; 
             text-transform: uppercase;
             margin-top: 1px;
-        }}
-
-        .stSelectbox label {{
-            font-size: 14px !important;
-            font-weight: 500 !important;
-        }}
-        .stSelectbox div[data-baseweb="select"] {{
-            margin-top: 1px !important;
-        }}
-
-        .element-container {{
-            margin-bottom: 3px !important;
-        }}
-
-        .block-container {{
-            padding-top: 0rem !important;
-            padding-bottom: 0rem !important;
-        }}
-
-        .row-widget.stColumns {{
-            gap: 10px !important;
         }}
 
         .page-title-container {{
@@ -626,17 +431,6 @@ st.markdown(f"""
             margin: 8px 0 5px 0;
         }}
         
-        .refresh-btn {{
-            background: transparent !important;
-            border: 1px solid #2196F3 !important;
-            color: #2196F3 !important;
-        }}
-        .refresh-btn:hover {{
-            background: #2196F3 !important;
-            color: #ffffff !important;
-        }}
-        
-        /* Styles pour la page Company Info */
         .company-card {{
             background: white;
             border-radius: 16px;
@@ -718,33 +512,6 @@ st.markdown(f"""
             padding: 15px 0 5px 0;
         }}
         
-        /* Styles pour le bouton Open Excel */
-        .open-excel-btn {{
-            background: linear-gradient(135deg, #1a73e8, #0d47a1) !important;
-            color: white !important;
-            border: none !important;
-            padding: 16px 32px !important;
-            border-radius: 12px !important;
-            font-size: 18px !important;
-            font-weight: 600 !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-            width: 100% !important;
-            box-shadow: 0 4px 20px rgba(26, 115, 232, 0.3) !important;
-        }}
-        .open-excel-btn:hover {{
-            transform: translateY(-2px) !important;
-            box-shadow: 0 8px 35px rgba(26, 115, 232, 0.5) !important;
-        }}
-        
-        .edit-container {{
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-            margin: 10px 0;
-        }}
-        
         .success-box {{
             background: #e8f5e9;
             border: 2px solid #4caf50;
@@ -754,18 +521,70 @@ st.markdown(f"""
             text-align: center;
         }}
         
-        .info-box {{
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            border-radius: 8px;
-            padding: 12px 15px;
+        .step-container {{
+            margin: 15px 0;
+        }}
+        
+        .step-box {{
+            background: white;
+            border-radius: 12px;
+            padding: 15px 20px;
             margin: 10px 0;
+            border: 2px solid #e8e0e0;
+            transition: all 0.3s ease;
+        }}
+        
+        .step-box:hover {{
+            border-color: #e3051c;
+            background: #fff5f5;
+        }}
+        
+        .step-box .header {{
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }}
+        
+        .step-box .num {{
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            line-height: 30px;
+            text-align: center;
+            flex-shrink: 0;
+        }}
+        
+        .step-box .num.blue {{ background: #1a73e8; }}
+        .step-box .num.orange {{ background: #ff9800; }}
+        .step-box .num.green {{ background: #4caf50; }}
+        
+        .step-box .icon {{ font-size: 22px; }}
+        .step-box .title {{ font-weight: 600; color: #1a0000; font-size: 15px; }}
+        .step-box .desc {{ font-size: 13px; color: #888; margin-top: 2px; }}
+        
+        .upload-area {{
+            background: #faf8f8;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 5px;
+            transition: all 0.3s ease;
+        }}
+        
+        .upload-area:hover {{
+            border-color: #4caf50;
+            background: #f5faf5;
         }}
     </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. LEFT PANEL
+# LEFT PANEL
 # ==============================================================================
 st.markdown("""
     <div class="left-panel-corporate">
@@ -780,7 +599,7 @@ st.markdown("""
 col_left_void, col_right_main = st.columns([3, 7])
 
 # ==============================================================================
-# 4. RIGHT NAVIGATION STRUCTURE
+# RIGHT NAVIGATION
 # ==============================================================================
 with col_right_main:
     
@@ -976,13 +795,15 @@ with col_right_main:
                             """, unsafe_allow_html=True)
                 
                 st.markdown("""
-                    <div class="doc-btn-group">
-                        <div class="doc-btn-title">📄 Available <span>Documents</span></div>
-                        <div class="doc-btn-subtitle">Click on a document type to view or download</div>
+                    <div style="margin: 15px 0 5px 0; padding: 20px 15px 15px 15px; background: linear-gradient(135deg, #ffffff, #f8f5f5); border-radius: 16px; border: 2px solid #e3051c; box-shadow: 0 4px 25px rgba(227, 5, 28, 0.12);">
+                        <div style="text-align: center; color: #1a0000; font-size: 20px; font-weight: 700; margin: 0 0 5px 0; letter-spacing: 3px; text-transform: uppercase;">
+                            📄 Available <span style="color: #e3051c;">Documents</span>
+                        </div>
+                        <div style="text-align: center; color: #6b4a4a; font-size: 13px; margin: 0 0 15px 0; letter-spacing: 0.5px;">Click on a document type to view or download</div>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                st.markdown('<div class="doc-category-label">📐 2D Drawings</div>', unsafe_allow_html=True)
+                st.markdown('<div style="font-size: 11px; font-weight: 600; color: #888888; padding: 4px 12px; background: #f5f5f5; border-radius: 12px; display: inline-block; margin: 8px 0 6px 0; border-left: 3px solid #e3051c; letter-spacing: 1.5px; text-transform: uppercase;">📐 2D Drawings</div>', unsafe_allow_html=True)
                 col_2d_1, col_2d_2, col_2d_3 = st.columns(3)
                 with col_2d_1:
                     if st.button("📐 2D Raw Part", key=f"2d_raw_{search_value}", use_container_width=True):
@@ -994,7 +815,7 @@ with col_right_main:
                     if st.button("📐 2D Assembly", key=f"2d_assy_{search_value}", use_container_width=True):
                         st.success(f"✅ 2D Assembly Drawing for {search_value}")
                 
-                st.markdown('<div class="doc-category-label">📐 3D Drawings</div>', unsafe_allow_html=True)
+                st.markdown('<div style="font-size: 11px; font-weight: 600; color: #888888; padding: 4px 12px; background: #f5f5f5; border-radius: 12px; display: inline-block; margin: 8px 0 6px 0; border-left: 3px solid #e3051c; letter-spacing: 1.5px; text-transform: uppercase;">📐 3D Drawings</div>', unsafe_allow_html=True)
                 col_3d_1, col_3d_2, col_3d_3 = st.columns(3)
                 with col_3d_1:
                     if st.button("📐 3D Raw Part", key=f"3d_raw_{search_value}", use_container_width=True):
@@ -1006,7 +827,7 @@ with col_right_main:
                     if st.button("📐 3D Assembly", key=f"3d_assy_{search_value}", use_container_width=True):
                         st.success(f"✅ 3D Assembly Model for {search_value}")
                 
-                st.markdown('<div class="doc-category-label">🏗️ Mold & Tooling</div>', unsafe_allow_html=True)
+                st.markdown('<div style="font-size: 11px; font-weight: 600; color: #888888; padding: 4px 12px; background: #f5f5f5; border-radius: 12px; display: inline-block; margin: 8px 0 6px 0; border-left: 3px solid #e3051c; letter-spacing: 1.5px; text-transform: uppercase;">🏗️ Mold & Tooling</div>', unsafe_allow_html=True)
                 col_mold_1, col_mold_2 = st.columns(2)
                 with col_mold_1:
                     if st.button("🏗️ Mold Drawing", key=f"mold_{search_value}", use_container_width=True):
@@ -1015,7 +836,7 @@ with col_right_main:
                     if st.button("🔧 Tooling Drawing", key=f"tooling_{search_value}", use_container_width=True):
                         st.success(f"✅ Tooling Drawing for {search_value}")
                 
-                st.markdown('<div class="doc-category-label">✅ Standards & Bushings</div>', unsafe_allow_html=True)
+                st.markdown('<div style="font-size: 11px; font-weight: 600; color: #888888; padding: 4px 12px; background: #f5f5f5; border-radius: 12px; display: inline-block; margin: 8px 0 6px 0; border-left: 3px solid #e3051c; letter-spacing: 1.5px; text-transform: uppercase;">✅ Standards & Bushings</div>', unsafe_allow_html=True)
                 col_std_1, col_std_2 = st.columns(2)
                 with col_std_1:
                     if st.button("✅ Product Standard", key=f"standard_{search_value}", use_container_width=True):
@@ -1030,7 +851,7 @@ with col_right_main:
         else:
             st.info("Select a project and click Search to see results")
 
-    # PAGE: LOGIN FORM - AVEC OUVERTURE DIRECTE ET REFRESH AUTOMATIQUE
+    # PAGE: LOGIN - VERSION SIMPLE
     elif st.session_state.page == "login":
         st.markdown("""
             <div class="page-title-container">
@@ -1055,7 +876,6 @@ with col_right_main:
                     if username == "DMC" and password == "dmc1122":
                         st.session_state.logged_in = True
                         st.session_state.login_success = True
-                        # Sauvegarder le timestamp du fichier
                         st.session_state.file_timestamp = get_file_modification_time()
                         st.rerun()
                     else:
@@ -1081,95 +901,97 @@ with col_right_main:
                 excel_path = "Projects -PN (1).xlsx"
                 if os.path.exists(excel_path):
                     
-                    # Message d'information
                     st.markdown("""
-                        <div class="info-box">
-                            <p style="margin: 0; font-size: 14px; color: #0d47a1; font-weight: 500;">
-                                📝 <b>Edit Excel File</b>
+                        <div style="background: linear-gradient(135deg, #fff3e0, #ffe0b2); border: 2px solid #ff9800; border-radius: 12px; padding: 15px 20px; margin: 10px 0;">
+                            <p style="margin: 0; font-size: 15px; font-weight: 700; color: #e65100; text-align: center;">
+                                📝 Modify Excel File
                             </p>
-                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #1565c0;">
-                                1. Click <b>"Open Excel File"</b> to edit directly in your spreadsheet application<br>
-                                2. Make your changes and <b>save the file</b><br>
-                                3. Click <b>"Refresh Data"</b> to load the changes
+                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #bf360c; text-align: center;">
+                                Follow the 3 steps below to modify the data
                             </p>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # Bouton Open Excel
-                    col_open, col_refresh_btn = st.columns(2)
-                    with col_open:
-                        if st.button("📂 Open Excel File", type="primary", use_container_width=True):
-                            success, message = open_excel_file()
-                            if success:
-                                st.success("✅ File opened successfully in your spreadsheet application!")
-                                # Sauvegarder le timestamp pour détecter les modifications
-                                st.session_state.file_timestamp = get_file_modification_time()
-                            else:
-                                st.error(f"❌ Error: {message}")
+                    # Step 1: Download
+                    st.markdown("""
+                        <div class="step-box">
+                            <div class="header">
+                                <span class="num blue">1</span>
+                                <span class="icon">📥</span>
+                                <span class="title">Download</span>
+                            </div>
+                            <div class="desc">Download the Excel file to your computer</div>
+                        </div>
+                    """, unsafe_allow_html=True)
                     
-                    with col_refresh_btn:
-                        # Bouton Refresh avec détection automatique des modifications
-                        if st.button("🔄 Refresh Data", type="primary", use_container_width=True):
-                            current_time = get_file_modification_time()
-                            if st.session_state.file_timestamp:
-                                if current_time and current_time > st.session_state.file_timestamp:
-                                    # Le fichier a été modifié
-                                    data, images = load_project_data()
-                                    st.session_state.project_data = data
-                                    st.session_state.images_data = images
-                                    st.session_state.file_timestamp = current_time
-                                    st.success("✅ Data refreshed successfully! Changes loaded.")
-                                    st.balloons()
-                                else:
-                                    st.info("ℹ️ No changes detected in the file.")
-                            else:
-                                data, images = load_project_data()
-                                st.session_state.project_data = data
-                                st.session_state.images_data = images
-                                st.session_state.file_timestamp = get_file_modification_time()
-                                st.success("✅ Data refreshed successfully!")
+                    with open(excel_path, "rb") as f:
+                        file_data = f.read()
                     
-                    # Détection automatique des modifications (refresh automatique)
-                    st.markdown("---")
+                    st.download_button(
+                        label="📥 Download Excel File",
+                        data=file_data,
+                        file_name="Projects -PN (1).xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True
+                    )
                     
-                    # Vérification automatique
-                    current_time = get_file_modification_time()
-                    if st.session_state.file_timestamp and current_time:
-                        if current_time > st.session_state.file_timestamp and not st.session_state.get('auto_refreshed', False):
-                            # Le fichier a été modifié - refresh automatique
+                    # Step 2: Modify
+                    st.markdown("""
+                        <div class="step-box">
+                            <div class="header">
+                                <span class="num orange">2</span>
+                                <span class="icon">✏️</span>
+                                <span class="title">Modify</span>
+                            </div>
+                            <div class="desc">Open the file, make your changes, and save it</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Step 3: Upload
+                    st.markdown("""
+                        <div class="step-box">
+                            <div class="header">
+                                <span class="num green">3</span>
+                                <span class="icon">📤</span>
+                                <span class="title">Upload</span>
+                            </div>
+                            <div class="desc">Upload the modified file to update the database</div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    
+                    st.markdown("""
+                        <div class="upload-area">
+                            <span style="font-size: 24px;">📤</span>
+                            <p style="font-weight: 600; color: #1a0000; margin: 5px 0 2px 0;">Upload Modified File</p>
+                            <p style="font-size: 12px; color: #6b4a4a; margin: 0;">Select the Excel file after modification</p>
+                    """, unsafe_allow_html=True)
+                    
+                    uploaded_file = st.file_uploader(
+                        "Choose the modified Excel file (.xlsx)", 
+                        type=["xlsx"],
+                        key="upload_modified_excel",
+                        label_visibility="collapsed"
+                    )
+                    
+                    if uploaded_file is not None:
+                        try:
+                            with open("Projects -PN (1).xlsx", "wb") as f:
+                                f.write(uploaded_file.getbuffer())
+                            
+                            st.success("✅ File uploaded successfully! Data updated.")
+                            
                             data, images = load_project_data()
                             st.session_state.project_data = data
                             st.session_state.images_data = images
-                            st.session_state.file_timestamp = current_time
-                            st.session_state.auto_refreshed = True
-                            st.rerun()
+                            
+                            if st.button("🔄 Go to Consult", type="primary", use_container_width=True):
+                                st.session_state.page = "consult"
+                                st.rerun()
+                            
+                        except Exception as e:
+                            st.error(f"❌ Error saving file: {str(e)}")
                     
-                    # Afficher le statut du fichier
-                    st.markdown("""
-                        <div style="background: #f5f5f5; border-radius: 8px; padding: 10px 15px; margin: 10px 0;">
-                            <p style="margin: 0; font-size: 12px; color: #666;">
-                                📄 <b>File status:</b> 
-                    """, unsafe_allow_html=True)
-                    
-                    if st.session_state.file_timestamp:
-                        last_modified = datetime.fromtimestamp(st.session_state.file_timestamp).strftime("%H:%M:%S")
-                        st.markdown(f"""
-                            <span style="color: #4caf50;">✓ Last modified: {last_modified}</span>
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown("""
-                            <span style="color: #ff9800;">⚠ No modification detected</span>
-                            </p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
-                    # Go to Consult
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("📊 Go to Consult", type="primary", use_container_width=True):
-                        st.session_state.page = "consult"
-                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
                                 
                 else:
                     st.error(f"❌ File not found: {excel_path}")
@@ -1197,7 +1019,6 @@ with col_right_main:
                 </div>
             """, unsafe_allow_html=True)
             
-            # Informations
             items = [
                 ("📍 Address", "Atlantic Free Zone, Kénitra, Morocco", False),
                 ("📞 Contact", "+212 5 37 00 00 00", False),
