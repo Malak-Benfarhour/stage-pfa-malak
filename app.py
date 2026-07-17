@@ -134,6 +134,39 @@ st.markdown(f"""
             font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
         }} 
 
+        /* ===== DESACTIVER AUTOFILL NAVIGATEUR ===== */
+        input {{
+            autocomplete: off !important;
+        }}
+        
+        input[type="password"] {{
+            autocomplete: new-password !important;
+        }}
+        
+        /* Supprimer le background jaune autofill */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {{
+            -webkit-box-shadow: 0 0 0 30px #ffffff inset !important;
+            -webkit-text-fill-color: #1a0000 !important;
+            box-shadow: 0 0 0 30px #ffffff inset !important;
+        }}
+        
+        /* Cacher l'icône du gestionnaire de mots de passe */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {{
+            display: none !important;
+        }}
+        
+        /* Cacher la bulle de suggestion */
+        input::-webkit-credentials-auto-fill-button,
+        input::-webkit-contacts-auto-fill-button {{
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }}
+        
         .left-panel-corporate {{
             position: fixed;
             left: 0; top: 0; width: 30%;
@@ -528,15 +561,10 @@ st.markdown(f"""
         .step-box {{
             background: white;
             border-radius: 12px;
-            padding: 15px 20px;
-            margin: 10px 0;
+            padding: 12px 18px;
+            margin: 8px 0;
             border: 2px solid #e8e0e0;
-            transition: all 0.3s ease;
-        }}
-        
-        .step-box:hover {{
-            border-color: #e3051c;
-            background: #fff5f5;
+            cursor: default;
         }}
         
         .step-box .header {{
@@ -547,13 +575,13 @@ st.markdown(f"""
         
         .step-box .num {{
             display: inline-block;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             color: white;
             font-weight: 700;
-            font-size: 14px;
-            line-height: 30px;
+            font-size: 13px;
+            line-height: 28px;
             text-align: center;
             flex-shrink: 0;
         }}
@@ -562,15 +590,15 @@ st.markdown(f"""
         .step-box .num.orange {{ background: #ff9800; }}
         .step-box .num.green {{ background: #4caf50; }}
         
-        .step-box .icon {{ font-size: 22px; }}
-        .step-box .title {{ font-weight: 600; color: #1a0000; font-size: 15px; }}
-        .step-box .desc {{ font-size: 13px; color: #888; margin-top: 2px; }}
+        .step-box .icon {{ font-size: 20px; }}
+        .step-box .title {{ font-weight: 600; color: #1a0000; font-size: 14px; }}
+        .step-box .desc {{ font-size: 12px; color: #888; margin-top: 2px; }}
         
         .upload-area {{
             background: #faf8f8;
             border: 2px dashed #ddd;
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 10px;
+            padding: 12px 15px;
             text-align: center;
             margin-top: 5px;
             transition: all 0.3s ease;
@@ -579,6 +607,23 @@ st.markdown(f"""
         .upload-area:hover {{
             border-color: #4caf50;
             background: #f5faf5;
+        }}
+        
+        .upload-area .upload-icon {{
+            font-size: 20px;
+        }}
+        
+        .upload-area .upload-title {{
+            font-weight: 600;
+            color: #1a0000;
+            font-size: 13px;
+            margin: 3px 0 1px 0;
+        }}
+        
+        .upload-area .upload-desc {{
+            font-size: 11px;
+            color: #6b4a4a;
+            margin: 0;
         }}
     </style>
 """, unsafe_allow_html=True)
@@ -644,6 +689,8 @@ with col_right_main:
                     </div>
                 """, unsafe_allow_html=True)
                 if st.button("✏️ Open Modify", key="btn_modify", use_container_width=True):
+                    st.session_state.login_success = False
+                    st.session_state.logged_in = False
                     st.session_state.page = "login"
                     st.rerun()
 
@@ -851,7 +898,7 @@ with col_right_main:
         else:
             st.info("Select a project and click Search to see results")
 
-    # PAGE: LOGIN - VERSION SIMPLE
+    # PAGE: LOGIN - AVEC AUTOFILL DESACTIVE
     elif st.session_state.page == "login":
         st.markdown("""
             <div class="page-title-container">
@@ -865,8 +912,18 @@ with col_right_main:
         space_l, login_grid, space_r = st.columns([0.2, 0.6, 0.2])
         
         with login_grid:
-            username = st.text_input("Username / ID", placeholder="Enter your identifier")
-            password = st.text_input("Password", type="password", placeholder="Enter your access key")
+            username = st.text_input(
+                "Username / ID",
+                placeholder="Enter your identifier",
+                autocomplete="off"
+            )
+            
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Enter your access key",
+                autocomplete="off"
+            )
             
             st.markdown("<br>", unsafe_allow_html=True)
             
@@ -884,6 +941,8 @@ with col_right_main:
                 
             with col2:
                 if st.button("← Back", type="secondary", key="back_from_login_btn", use_container_width=True):
+                    st.session_state.login_success = False
+                    st.session_state.logged_in = False
                     st.session_state.page = "menu"
                     st.rerun()
             
@@ -902,11 +961,11 @@ with col_right_main:
                 if os.path.exists(excel_path):
                     
                     st.markdown("""
-                        <div style="background: linear-gradient(135deg, #fff3e0, #ffe0b2); border: 2px solid #ff9800; border-radius: 12px; padding: 15px 20px; margin: 10px 0;">
-                            <p style="margin: 0; font-size: 15px; font-weight: 700; color: #e65100; text-align: center;">
+                        <div style="background: linear-gradient(135deg, #fff3e0, #ffe0b2); border: 2px solid #ff9800; border-radius: 12px; padding: 12px 15px; margin: 8px 0;">
+                            <p style="margin: 0; font-size: 14px; font-weight: 700; color: #e65100; text-align: center;">
                                 📝 Modify Excel File
                             </p>
-                            <p style="margin: 5px 0 0 0; font-size: 13px; color: #bf360c; text-align: center;">
+                            <p style="margin: 3px 0 0 0; font-size: 12px; color: #bf360c; text-align: center;">
                                 Follow the 3 steps below to modify the data
                             </p>
                         </div>
@@ -959,11 +1018,12 @@ with col_right_main:
                         </div>
                     """, unsafe_allow_html=True)
                     
+                    # Upload area
                     st.markdown("""
                         <div class="upload-area">
-                            <span style="font-size: 24px;">📤</span>
-                            <p style="font-weight: 600; color: #1a0000; margin: 5px 0 2px 0;">Upload Modified File</p>
-                            <p style="font-size: 12px; color: #6b4a4a; margin: 0;">Select the Excel file after modification</p>
+                            <span class="upload-icon">📤</span>
+                            <p class="upload-title">Upload Modified File</p>
+                            <p class="upload-desc">Select the Excel file after modification</p>
                     """, unsafe_allow_html=True)
                     
                     uploaded_file = st.file_uploader(
